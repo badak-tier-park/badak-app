@@ -110,6 +110,76 @@ eas build --platform ios
 
 ---
 
+## Git 워크플로우
+
+### 브랜치 전략
+
+`main` 브랜치는 보호되어 있어 직접 push가 불가합니다. 모든 작업은 브랜치를 생성하고 PR을 통해 merge합니다.
+
+### 브랜치 네이밍 규칙
+
+```
+<타입>/<설명>
+
+예시:
+feat/login-screen
+fix/crash-on-startup
+chore/update-dependencies
+docs/git-workflow-guide
+refactor/auth-logic
+```
+
+| 타입 | 설명 |
+|------|------|
+| `feat` | 새 기능 |
+| `fix` | 버그 수정 |
+| `chore` | 빌드, 설정, 패키지 등 기타 작업 |
+| `docs` | 문서 작업 |
+| `refactor` | 기능 변경 없는 코드 개선 |
+| `style` | 코드 포맷, 스타일 수정 |
+
+### 작업 흐름
+
+```bash
+# 1. main 최신화
+git checkout main
+git pull origin main
+
+# 2. 작업 브랜치 생성
+git checkout -b feat/my-feature
+
+# 3. 작업 후 커밋
+git add <파일>
+git commit -m "feat: 로그인 화면 추가"
+
+# 4. 원격에 push
+git push origin feat/my-feature
+
+# 5. GitHub에서 PR 생성 → 리뷰 요청 → 승인 후 merge
+```
+
+### 커밋 메시지 규칙
+
+[Conventional Commits](https://www.conventionalcommits.org/) 형식을 따릅니다.
+
+```
+<타입>: <변경 내용 요약>
+
+예시:
+feat: 홈 화면 컴포넌트 추가
+fix: 로그인 버튼 클릭 시 앱 크래시 수정
+chore: expo 54.0으로 업그레이드
+docs: README git 가이드 추가
+```
+
+### PR 규칙
+
+- main에 merge하려면 **최소 1명의 승인**이 필요합니다.
+- PR 제목도 커밋 메시지 규칙과 동일한 형식으로 작성합니다.
+- merge 후 작업 브랜치는 삭제합니다.
+
+---
+
 ## 관련 프로젝트
 
 | 프로젝트 | 설명 |
