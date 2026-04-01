@@ -15,7 +15,7 @@ export interface BuildItem {
 }
 
 export type RootStackParamList = {
-    Home: undefined;
-    Detail: { item: BuildItem };
-    AddBuild: undefined;
+  Home: undefined;
+  Detail: { item: BuildItem };
+  AddBuild: { item?: BuildItem };
 };

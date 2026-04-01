@@ -5,6 +5,8 @@ import { BUILD_DATA as INITIAL_DATA } from '../services/dataService';
 interface BuildContextType {
   builds: BuildItem[];
   addBuild: (newBuild: BuildItem) => void;
+  updateBuild: (updatedBuild: BuildItem) => void;
+  deleteBuild: (id: string) => void;
 }
 
 const BuildContext = createContext<BuildContextType | undefined>(undefined);
@@ -13,11 +15,21 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [builds, setBuilds] = useState<BuildItem[]>(INITIAL_DATA);
 
   const addBuild = (newBuild: BuildItem) => {
-    setBuilds((prev) => [newBuild, ...prev]); // 새 빌드를 맨 위에 추가
+    setBuilds((prev) => [newBuild, ...prev]);
+  };
+
+  const updateBuild = (updatedBuild: BuildItem) => {
+    setBuilds((prev) => 
+      prev.map((item) => (item.id === updatedBuild.id ? updatedBuild : item))
+    );
+  };
+
+  const deleteBuild = (id: string) => {
+    setBuilds((prev) => prev.filter((item) => item.id !== id));
   };
 
   return (
-    <BuildContext.Provider value={{ builds, addBuild }}>
+    <BuildContext.Provider value={{ builds, addBuild, updateBuild, deleteBuild }}>
       {children}
     </BuildContext.Provider>
   );
