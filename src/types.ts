@@ -1,19 +1,21 @@
 export interface BuildStep {
-  pop: number;
-  action: string;
+    pop: number;
+    time: string;
+    action: string;
 }
 
 export interface BuildItem {
-  id: string;
-  title: string;
-  race: 'T' | 'Z' | 'P';
-  matchup: string;
-  difficulty: 'Easy' | 'Normal' | 'Hard';
-  tags: string[];
-  buildSteps: BuildStep[];
+    id: string;
+    title: string;
+    race: 'T' | 'Z' | 'P';
+    matchup: string;
+    difficulty: 'Easy' | 'Normal' | 'Hard';
+    tags: string[];
+    buildSteps: BuildStep[];
 }
 
 export type RootStackParamList = {
-  Home: undefined;
-  Detail: { item: BuildItem };
+    Home: undefined;
+    Detail: { item: BuildItem };
+    AddBuild: undefined;
 };
