@@ -49,13 +49,13 @@ export default function HomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#121212' },
+  container: { flex: 1, backgroundColor: '#121212', alignItems: 'center' },
   filterContainer: { flexDirection: 'row', justifyContent: 'center', marginVertical: 15 },
   filterButton: { paddingVertical: 8, paddingHorizontal: 20, borderRadius: 20, backgroundColor: '#333', marginHorizontal: 5 },
   filterActive: { backgroundColor: '#007AFF' },
   filterText: { color: '#bbb', fontWeight: '600' },
   filterTextActive: { color: '#fff' },
-  listContent: { paddingHorizontal: 20 },
+  listContent: { paddingHorizontal: 20 , width: '100%', maxWidth: 600},
   card: { backgroundColor: '#1e1e1e', borderRadius: 12, padding: 15, marginBottom: 15, borderWidth: 1, borderColor: '#333' },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   raceBadge: { width: 24, height: 24, borderRadius: 12, textAlign: 'center', lineHeight: 24, color: '#fff', fontWeight: 'bold', marginRight: 10, fontSize: 12, overflow: 'hidden' },
