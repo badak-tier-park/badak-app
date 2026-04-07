@@ -35,7 +35,7 @@ export default function HomeScreen({ navigation }: Props) {
         {/* 글쓰기 플로팅 버튼 */}
         <TouchableOpacity 
             style={styles.fab}
-            onPress={() => navigation.navigate('AddBuild')}
+            onPress={() => navigation.navigate('AddBuild', {})}
         >
             <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>

@@ -12,10 +12,11 @@ export interface BuildItem {
     difficulty: 'Easy' | 'Normal' | 'Hard';
     tags: string[];
     buildSteps: BuildStep[];
+    description: string[];
 }
 
 export type RootStackParamList = {
-  Home: undefined;
-  Detail: { item: BuildItem };
-  AddBuild: { item?: BuildItem };
+    Home: undefined;
+    Detail: { item: BuildItem };
+    AddBuild: { item?: BuildItem };
 };
