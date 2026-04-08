@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, FlatList, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
+import { RootStackParamList, BuildItem } from '../types'; // BuildItem 타입 사용
 import { useBuilds } from '../context/BuildContext';
-import { RaceBadge } from '../components/RaceBadge';
 import { commonStyles } from '../utils/commonStyles';
 import { COLORS } from '../utils/theme';
+import { RaceBadge } from '../components/RaceBadge'; 
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -13,19 +13,21 @@ export default function HomeScreen({ navigation }: Props) {
     const { builds } = useBuilds();
 
     return (
-        <View style={commonStyles.safeArea}>
+        <SafeAreaView style={commonStyles.safeArea}>
         <FlatList
             data={builds}
-            keyExtractor={item => item.id}
-            contentContainerStyle={[commonStyles.container, { paddingBottom: 80 }]} // 버튼 공간 확보
+            keyExtractor={item => item.id} // id를 key로 사용
+            contentContainerStyle={[commonStyles.container, { paddingBottom: 80 }]} 
             renderItem={({ item }) => (
             <TouchableOpacity 
                 style={[commonStyles.card, styles.cardLayout]} 
                 onPress={() => navigation.navigate('Detail', { item })}
             >
-                <RaceBadge race={item.race} />
+                {/* RaceBadge는 item.race를 사용 */}
+                <RaceBadge race={item.race} /> 
                 <View style={styles.textContainer}>
-                <Text style={styles.matchupText}>{item.matchup}</Text>
+                {/* item.matchup 제거 */}
+                {/* <Text style={styles.matchupText}>{item.matchup}</Text> */} 
                 <Text style={styles.cardTitle}>{item.title}</Text>
                 </View>
             </TouchableOpacity>
@@ -39,17 +41,17 @@ export default function HomeScreen({ navigation }: Props) {
         >
             <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
-        </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     cardLayout: { flexDirection: 'row', alignItems: 'center' },
     textContainer: { marginLeft: 15 },
-    matchupText: { color: COLORS.subText, fontSize: 12, marginBottom: 2 },
+    // matchupText 스타일 제거 (더 이상 사용되지 않음)
+    // matchupText: { color: COLORS.subText, fontSize: 12, marginBottom: 2 }, 
     cardTitle: { color: COLORS.text, fontSize: 16, fontWeight: '600' },
     
-    // 플로팅 버튼 스타일
     fab: {
         position: 'absolute',
         right: 20,
@@ -60,7 +62,6 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
         justifyContent: 'center',
         alignItems: 'center',
-        // 폰에서 그림자 효과
         elevation: 5,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -71,6 +72,6 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 30,
         fontWeight: '300',
-        marginTop: -2, // '+' 기호 미세 조정
+        marginTop: -2, 
     },
 });

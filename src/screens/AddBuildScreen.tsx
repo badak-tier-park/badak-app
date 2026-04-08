@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList, BuildStep } from '../types';
+import { RootStackParamList, BuildStep } from '../types'; 
 import { useBuilds } from '../context/BuildContext';
 import { commonStyles } from '../utils/commonStyles';
 import { COLORS } from '../utils/theme';
@@ -11,18 +11,30 @@ type Props = NativeStackScreenProps<RootStackParamList, 'AddBuild'>;
 export default function AddBuildScreen({ navigation, route }: Props) {
   const { addBuild, updateBuild } = useBuilds();
   
-  // 수정 모드인지 확인 (데이터가 넘어왔으면 수정 모드)
   const editItem = route.params?.item;
   const isEdit = !!editItem;
 
   const [title, setTitle] = useState(editItem?.title || '');
   const [race, setRace] = useState<'T' | 'Z' | 'P'>(editItem?.race || 'T');
-  const [steps, setSteps] = useState<BuildStep[]>(
-    editItem?.buildSteps || [{ pop: 0, time: '00:00', action: '' }]
-  );
+  const [description, setDescription] = useState(editItem?.description || ''); 
+  
+  const initialSteps: BuildStep[] = editItem?.build_steps?.map((step, index) => ({
+      ...step,
+      pop: step.pop?.toString() || '0', 
+      time: step.time || '00:00',
+      action: step.action || '',
+      // editItem이 있을 경우, 기존 step_order 유지
+      step_order: step.step_order ?? index,
+  })) || [
+      // editItem이 없을 경우, 기본값 설정
+      { pop: '0', time: '00:00', action: '', step_order: 0 } 
+  ];
+  
+  const [steps, setSteps] = useState<BuildStep[]>(initialSteps);
 
   const addStep = () => {
-    setSteps([...steps, { pop: 0, time: '00:00', action: '' }]);
+    // 새 스텝 추가 시 step_order 자동 증가
+    setSteps([...steps, { pop: '0', time: '00:00', action: '', step_order: steps.length }]);
   };
 
   const handleSave = () => {
@@ -30,21 +42,20 @@ export default function AddBuildScreen({ navigation, route }: Props) {
       alert('제목을 입력해주세요.');
       return;
     }
+    
+    const currentSteps = steps; 
 
     const buildData = {
-      id: isEdit ? editItem.id : Date.now().toString(),
       title,
       race,
-      matchup: editItem?.matchup || 'TvX',
-      difficulty: editItem?.difficulty || 'Normal',
-      tags: editItem?.tags || [],
-      buildSteps: steps,
+      description,
     };
 
     if (isEdit) {
-      updateBuild(buildData);
+      // updateBuild 호출 시 id, buildData, currentSteps 전달
+      updateBuild(editItem.id, buildData, currentSteps);
     } else {
-      addBuild(buildData);
+      addBuild(buildData, currentSteps);
     }
     
     navigation.goBack();
@@ -79,23 +90,36 @@ export default function AddBuildScreen({ navigation, route }: Props) {
           </View>
         </View>
 
+        {/* Description 입력 필드 추가 */}
+        <View style={styles.inputGroup}>
+            <Text style={styles.label}>빌드 설명</Text>
+            <TextInput 
+                style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+                value={description ?? ''} // description이 null일 경우 대비
+                onChangeText={setDescription}
+                placeholder="이 빌드에 대한 설명을 입력하세요."
+                placeholderTextColor="#666"
+                multiline
+            />
+        </View>
+
         <Text style={styles.label}>빌드 단계</Text>
         {steps.map((step, index) => (
           <View key={index} style={styles.stepRow}>
-            <TextInput 
-              style={[styles.input, { flex: 1, marginRight: 5 }]} 
-              placeholder="인구" 
+            <TextInput
+              style={[styles.input, { flex: 1, marginRight: 5 }]}
+              placeholder="인구"
               keyboardType="numeric"
-              value={step.pop.toString()}
+              value={step.pop} // string으로 유지
               onChangeText={(val) => {
                 const newSteps = [...steps];
-                newSteps[index].pop = parseInt(val) || 0;
+                newSteps[index].pop = val;
                 setSteps(newSteps);
               }}
             />
-            <TextInput 
-              style={[styles.input, { flex: 1.5, marginRight: 5 }]} 
-              placeholder="시간" 
+            <TextInput
+              style={[styles.input, { flex: 1.5, marginRight: 5 }]}
+              placeholder="시간 (e.g., 03:30)"
               value={step.time}
               onChangeText={(val) => {
                 const newSteps = [...steps];
@@ -103,9 +127,9 @@ export default function AddBuildScreen({ navigation, route }: Props) {
                 setSteps(newSteps);
               }}
             />
-            <TextInput 
-              style={[styles.input, { flex: 3 }]} 
-              placeholder="할 일" 
+            <TextInput
+              style={[styles.input, { flex: 3 }]}
+              placeholder="할 일"
               value={step.action}
               onChangeText={(val) => {
                 const newSteps = [...steps];

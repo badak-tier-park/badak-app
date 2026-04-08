@@ -1,19 +1,18 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { BuildItem } from '../types';
-import { BUILD_DATA as INITIAL_DATA } from '../services/dataService';
+import { BuildItem, BuildStep } from '../types'; 
 import { supabase } from '../utils/supabase';
 
 interface BuildContextType {
     builds: BuildItem[];
-    addBuild: (newBuild: BuildItem) => void;
-    updateBuild: (updatedBuild: BuildItem) => void;
+    addBuild: (buildData: Partial<BuildItem>, steps: BuildStep[]) => void; 
+    updateBuild: (buildId: string, buildData: Partial<BuildItem>, steps: BuildStep[]) => void;
     deleteBuild: (id: string) => void;
 }
 
 const BuildContext = createContext<BuildContextType | undefined>(undefined);
 
 export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [builds, setBuilds] = useState<BuildItem[]>(INITIAL_DATA);
+    const [builds, setBuilds] = useState<BuildItem[]>([]); 
     const [loading, setLoading] = useState(true);
 
     const fetchBuilds = async () => {
@@ -21,15 +20,27 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const { data, error } = await supabase
             .from('builds')
             .select(`
-                *,
-                build_steps (*)
+                *, 
+                build_steps ( * ) 
             `)
             .order('created_at', { ascending: false });
 
         if (error) {
             console.error('데이터 로딩 에러:', error.message);
         } else {
-            setBuilds(data || []);
+            const formattedData = data?.map((build: any) => ({
+                ...build,
+                build_steps: build.build_steps?.map((step: any) => ({ // any 대신 BuildStep 타입으로 명시하면 더 좋음
+                    id: step.id,
+                    build_id: step.build_id,
+                    step_order: step.step_order ?? 0, // step_order 기본값 설정
+                    pop: step.pop?.toString() || '0', 
+                    time: step.time || '00:00',
+                    action: step.action || '',
+                    note: step.note,
+                })) || [], 
+            })) || [];
+            setBuilds(formattedData);
         }
         setLoading(false);
     };
@@ -38,26 +49,27 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         fetchBuilds();
     }, []);
 
-    const addBuild = async (newBuild: BuildItem) => {
-        // 1. 메인 빌드 정보 저장
-        const { data: buildData, error: buildError } = await supabase
+    const addBuild = async (buildData: Partial<BuildItem>, steps: BuildStep[]) => { 
+        const { data: newBuild, error: buildError } = await supabase
             .from('builds')
             .insert([{
-                title: newBuild.title,
-                race: newBuild.race,
-                description: newBuild.description,
-                author_id: 1
+                title: buildData.title,
+                race: buildData.race,
+                description: buildData.description,
+                author_id: 1 
             }])
             .select()
             .single();
 
-        if (buildError) return console.error('빌드 저장 실패:', buildError);
+        if (buildError) {
+            console.error('빌드 저장 실패:', buildError);
+            return;
+        }
 
-        // 2. 생성된 빌드 ID를 가지고 상세 단계들 저장
-        const stepsToInsert = newBuild.buildSteps.map((step, index) => ({
-            build_id: buildData.id,
-            step_order: index,
-            pop: step.pop,
+        const stepsToInsert = steps.map((step, index) => ({
+            build_id: newBuild.id,
+            step_order: index, // step_order를 index로 설정
+            pop: step.pop, 
             time: step.time,
             action: step.action
         }));
@@ -66,22 +78,46 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             .from('build_steps')
             .insert(stepsToInsert);
 
-        if (stepError) {
-            console.error('단계 저장 실패:', stepError);
+        if (stepError) console.error('단계 저장 실패:', stepError);
+        fetchBuilds(); 
+    };
+
+    const updateBuild = async (buildId: string, buildData: Partial<BuildItem>, steps: BuildStep[]) => {
+        const { error: buildError } = await supabase
+            .from('builds')
+            .update({
+                title: buildData.title,
+                race: buildData.race,
+                description: buildData.description,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', buildId);
+
+        if (buildError) return console.error('빌드 업데이트 실패:', buildError);
+
+        await supabase.from('build_steps').delete().eq('build_id', buildId);
+        
+        const stepsToInsert = steps.map((step, index) => ({
+            build_id: buildId,
+            step_order: index, // step_order를 index로 설정
+            pop: step.pop, 
+            time: step.time,
+            action: step.action
+        }));
+
+        const { error: stepError } = await supabase.from('build_steps').insert(stepsToInsert);
+        if (stepError) console.error('단계 업데이트 실패:', stepError);
+        
+        fetchBuilds();
+    };
+
+    const deleteBuild = async (id: string) => {
+        const { error } = await supabase.from('builds').delete().eq('id', id);
+        if (error) {
+            console.error('빌드 삭제 실패:', error);
         } else {
-            // DB 저장 성공 시에만 로컬 상태 업데이트
-            fetchBuilds(); 
+            fetchBuilds();
         }
-    };
-
-    const updateBuild = (updatedBuild: BuildItem) => {
-        setBuilds((prev) => 
-        prev.map((item) => (item.id === updatedBuild.id ? updatedBuild : item))
-        );
-    };
-
-    const deleteBuild = (id: string) => {
-        setBuilds((prev) => prev.filter((item) => item.id !== id));
     };
 
     return (

@@ -79,8 +79,8 @@ export default function DetailScreen({ route, navigation }: Props) {
             </View>
           </View>
 
-          {/* 빌드 단계 리스트 */}
-          {item.buildSteps.map((step, index) => (
+                    {/* 빌드 단계 리스트 */}
+          {item.build_steps?.map((step, index) => (
             <View key={index} style={styles.tableRow}>
               <View style={styles.popColumn}>
                 <Text style={[styles.popText, { color: themeColor }]}>{step.pop}</Text>
