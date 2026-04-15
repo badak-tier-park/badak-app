@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import { BuildItem, BuildStep } from '../types'; 
 import { supabase } from '../utils/supabase';
 import { useAuth } from './AuthContext';
-import { useUsers } from './UserContext';
+import { useUsers } from './UserContext'; // UserContext 임포트
 
 interface BuildContextType {
     builds: BuildItem[];
@@ -18,18 +18,23 @@ const BuildContext = createContext<BuildContextType | undefined>(undefined);
 export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [builds, setBuilds] = useState<BuildItem[]>([]); 
     const [loadingBuilds, setLoadingBuilds] = useState(true); 
-    const { user } = useAuth(); // Supabase Auth User (ID는 UUID)
-
+    const { user } = useAuth(); // Supabase Auth User (id는 UUID)
     const fetchBuilds = useCallback(async () => {
         setLoadingBuilds(true);
-        // RLS 정책이 auth.role() = 'authenticated' 이면, 모든 authenticated 사용자의 빌드를 가져옴
-        const { data, error } = await supabase
-            .from('builds')
-            .select(`
-                *, 
+        let query = supabase.from('builds').select(`
+            *,
                 build_steps ( * ) 
-            `)
-            .order('created_at', { ascending: false });
+        `).order('created_at', { ascending: false });
+
+        // user.id (UUID) 를 author_id (UUID) 로 필터링
+        if (user?.id) {
+            query = query.eq('author_id', user.id);
+        } else {
+            // 로그인이 안 된 경우, RLS 정책에 따라 처리
+            // RLS: auth.role() = 'authenticated' 로 설정되어 있다면, 여기서는 빈 결과가 나와야 함
+        }
+
+        const { data, error } = await query;
 
         if (error) {
             console.error('빌드 데이터 로딩 에러:', error.message);
@@ -39,7 +44,7 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 title: build.title,
                 race: build.race,
                 description: build.description,
-                author_id: build.author_id, // author_id는 bigint 또는 uuid (DB 설정에 따라)
+                author_id: build.author_id,
                 is_public: build.is_public,
                 created_at: build.created_at,
                 updated_at: build.updated_at,
@@ -47,53 +52,64 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     id: step.id,
                     build_id: step.build_id,
                     step_order: step.step_order ?? 0,
-                    pop: step.pop?.toString() || '0', 
+                    pop: step.pop?.toString() || '0',
                     time: step.time || '00:00',
                     action: step.action || '',
                     note: step.note,
-                })) || [], 
+                })) || [],
             })) || [];
             setBuilds(formattedData);
         }
         setLoadingBuilds(false);
-    }, []);
-
+    }, [user?.id]); // user.id 변경 시 fetch
     useEffect(() => {
         fetchBuilds();
     }, [fetchBuilds]);
 
-    const addBuild = async (buildData: Partial<BuildItem>, steps: BuildStep[]) => { 
-        // author_id를 null로 보내고, RLS 정책은 authenticated 사용자만 허용하도록 설정
-        const authorId = null; 
-        console.log('Saving build with author_id (temporarily null):', authorId);
+    const addBuild = async (buildData: Partial<BuildItem>, steps: BuildStep[]) => {
+        const authorIdStr = String((user as any)?.discord_custom_id);
+
+        const payload = {
+            title: buildData.title || "테스트 빌드", // 필수값 보장
+            race: buildData.race || "T",           // 필수값 보장
+            description: buildData.description || "",
+            author_id: authorIdStr                 // 문자열로 보내기
+        };
+
+        const authorId = (user as any)?.discord_custom_id;
+        
+        console.log("최종 보낼 데이터:", payload);
+
+        if (!authorId) {
+            alert('인증 정보가 없습니다.');
+            return;
+        }
 
         const { data: newBuild, error: buildError } = await supabase
             .from('builds')
             .insert([{
-                title: buildData.title,
-                race: buildData.race,
-                description: buildData.description,
-                author_id: authorId // null 전달
+                title: buildData.title || "테스트 빌드",
+                race: buildData.race || "T",
+                description: buildData.description || "",
+                author_id: String(authorId) 
             }])
-            .select() // 생성된 빌드의 id 등을 받아오기 위해 select 사용
+            .select()
             .single();
 
         if (buildError) {
-            console.error('빌드 저장 실패:', buildError); 
+            // 여기서 여전히 42501이 뜬다면 정책의 비교문 형식이 문제인 것임
+            console.error('빌드 저장 실패:', buildError);
             return;
         }
-        
-        // newBuild.id 는 Supabase에서 생성된 빌드의 UUID (또는 ID)
-        const newBuildId = newBuild?.id; 
+        const newBuildId = newBuild?.id;
         if (!newBuildId) {
              console.error('새 빌드 ID를 가져오지 못했습니다.');
              return;
         }
-
         const stepsToInsert = steps.map((step, index) => ({
-            build_id: newBuildId, // 생성된 빌드의 ID 사용
-            step_order: index, 
-            pop: step.pop, 
+            build_id: newBuildId,
+            step_order: index,
+            pop: step.pop,
             time: step.time,
             action: step.action
         }));
@@ -103,15 +119,13 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             .insert(stepsToInsert);
 
         if (stepError) {
-             console.error('단계 저장 실패:', stepError); 
+             console.error('단계 저장 실패:', stepError);
         } else {
-             fetchBuilds(); // 성공 시 데이터 새로고침
+            fetchBuilds();
         }
     };
 
     const updateBuild = async (buildId: string, buildData: Partial<BuildItem>, steps: BuildStep[]) => {
-        // Update 시 author_id는 변경하지 않거나, 필요하다면 로그인된 사용자의 ID로 업데이트
-        
         const { error: buildError } = await supabase
             .from('builds')
             .update({
@@ -125,18 +139,18 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (buildError) return console.error('빌드 업데이트 실패:', buildError);
 
         await supabase.from('build_steps').delete().eq('build_id', buildId);
-        
+
         const stepsToInsert = steps.map((step, index) => ({
             build_id: buildId,
-            step_order: index, 
-            pop: step.pop, 
+            step_order: index,
+            pop: step.pop,
             time: step.time,
             action: step.action
         }));
 
         const { error: stepError } = await supabase.from('build_steps').insert(stepsToInsert);
         if (stepError) console.error('단계 업데이트 실패:', stepError);
-        
+
         fetchBuilds();
     };
 
@@ -147,7 +161,7 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } else {
             fetchBuilds();
         }
-    };
+};
 
     return (
         <BuildContext.Provider value={{ builds, loadingBuilds, addBuild, updateBuild, deleteBuild, fetchBuilds }}>
@@ -161,3 +175,4 @@ export const useBuilds = () => {
     if (!context) throw new Error('useBuilds must be used within a BuildProvider');
     return context;
 };
+

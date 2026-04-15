@@ -26,9 +26,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    setSession(session);
+    
+    if (session?.user) {
+        const discordId = session.user.user_metadata.provider_id || 
+                        session.user.identities?.[0]?.identity_data?.sub;
+        
+        const extendedUser = {
+        ...session.user,
+        discord_custom_id: discordId ? Number(discordId) : null
+        };
+        setUser(extendedUser as any);
+    } else {
+        setUser(null);
+    }
+    setLoading(false);
     });
 
     return () => subscription.unsubscribe();
