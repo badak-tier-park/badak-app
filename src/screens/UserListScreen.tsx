@@ -17,7 +17,7 @@ export default function UserListScreen({ navigation, route }: Props) {
     const [selectedTier, setSelectedTier] = useState<string | undefined>(undefined);
     const [selectedRace, setSelectedRace] = useState<'T' | 'Z' | 'P' | undefined>(undefined);
 
-    const tierOptions = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Grandmaster'];
+    const tierOptions = ['S', 'A', 'B', 'C', 'D', 'E'];
     const raceOptions: ('T' | 'Z' | 'P')[] = ['T', 'Z', 'P'];
 
     useEffect(() => {
