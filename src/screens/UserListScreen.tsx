@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { RootStackParamList, User } from '../types';
@@ -14,6 +14,8 @@ export default function UserListScreen({ navigation, route }: Props) {
     const { users, loadingUsers, filterUsers } = useUsers();
     const [selectedTier, setSelectedTier] = useState<string | undefined>(undefined);
     const [selectedRace, setSelectedRace] = useState<'T' | 'Z' | 'P' | undefined>(undefined);
+    const [showTierModal, setShowTierModal] = useState(false);
+    const [showRaceModal, setShowRaceModal] = useState(false);
 
     const tierOptions = ['S', 'A', 'B', 'C', 'D', 'E'];
     const raceOptions: ('T' | 'Z' | 'P')[] = ['T', 'Z', 'P'];
@@ -31,18 +33,20 @@ export default function UserListScreen({ navigation, route }: Props) {
         <View style={styles.userCard}>
             <RaceBadge race={item.race || 'T'} />
             <View style={styles.userInfo}>
-                <Text style={styles.nickname}>{item.nickname || 'Unknown User'}</Text>
-                <View style={styles.tierRaceRow}>
-                    {item.tier && <Text style={styles.tierText}>{item.tier}</Text>}
-                    {item.race && <Text style={styles.raceText}>({
-                        item.race === 'T' ? '테란' :
-                        item.race === 'Z' ? '저그' :
-                        '프로토스'
-                    })</Text>}
+                <View style={styles.headerRow}>
+                    <Text style={styles.nickname}>{item.nickname || 'Unknown User'}</Text>
+                    <View style={styles.tierRaceRow}>
+                        {item.tier && <Text style={styles.tierText}>{item.tier}</Text>}
+                    </View>
                 </View>
-                {item.discord_id && <Text style={styles.discordId}>Discord ID: {item.discord_id}</Text>}
             </View>
         </View>
+    );
+
+    const FilterButton = ({ label, value, onPress }: any) => (
+        <TouchableOpacity style={styles.filterButton} onPress={onPress}>
+            <Text style={styles.filterButtonText}>{value || label}</Text>
+                    </TouchableOpacity>
     );
 
     return (
@@ -51,35 +55,54 @@ export default function UserListScreen({ navigation, route }: Props) {
                 <Text style={styles.headerTitle}>유저 목록</Text>
 
                 <View style={styles.filterContainer}>
-                    <Text style={styles.filterLabel}>티어:</Text>
-                    <Picker
-                        selectedValue={selectedTier}
-                        onValueChange={(itemValue) => setSelectedTier(itemValue || undefined)}
-                        style={styles.pickerStyle}
-                        itemStyle={styles.pickerItemStyle}
-                    >
-                        <Picker.Item label="모든 티어" value={undefined} />
-                        {tierOptions.map((tier) => (
-                            <Picker.Item key={tier} label={tier} value={tier} />
-                        ))}
-                    </Picker>
-
-                    <Text style={styles.filterLabel}>종족:</Text>
-                    <Picker
-                        selectedValue={selectedRace}
-                        onValueChange={(itemValue) => setSelectedRace(itemValue || undefined)}
-                        style={styles.pickerStyle}
-                        itemStyle={styles.pickerItemStyle}
-                    >
-                        <Picker.Item label="모든 종족" value={undefined} />
-                        {raceOptions.map((race) => (
-                            <Picker.Item key={race} label={race === 'T' ? '테란' : race === 'Z' ? '저그' : '프로토스'} value={race} />
-                        ))}
-                    </Picker>
+                    <FilterButton label="티어" value={selectedTier} onPress={() => setShowTierModal(true)} />
+                    <FilterButton label="종족" value={selectedRace} onPress={() => setShowRaceModal(true)} />
                     <TouchableOpacity onPress={resetFilters} style={styles.resetButton}>
                         <Text style={styles.resetButtonText}>초기화</Text>
                     </TouchableOpacity>
                 </View>
+
+                {/* 티어 선택 모달 */}
+                <Modal visible={showTierModal} transparent animationType="slide">
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <FlatList
+                                data={['모든 티어', ...tierOptions]}
+                                keyExtractor={(item) => item}
+                                renderItem={({item}) => (
+                                    <TouchableOpacity onPress={() => {
+                                        setSelectedTier(item === '모든 티어' ? undefined : item);
+                                        setShowTierModal(false);
+                                    }} style={styles.modalItem}>
+                                        <Text style={styles.modalItemText}>{item}</Text>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        </View>
+                    </View>
+                </Modal>
+
+                {/* 종족 선택 모달 */}
+                <Modal visible={showRaceModal} transparent animationType="slide">
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <FlatList
+                                data={['모든 종족', ...raceOptions]}
+                                keyExtractor={(item) => item}
+                                renderItem={({item}) => (
+                                    <TouchableOpacity onPress={() => {
+                                        setSelectedRace(item === '모든 종족' ? undefined : item as 'T' | 'Z' | 'P');
+                                        setShowRaceModal(false);
+                                    }} style={styles.modalItem}>
+                                        <Text style={styles.modalItemText}>
+                                            {item === '모든 종족' ? item : item === 'T' ? '테란' : item === 'Z' ? '저그' : '프로토스'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        </View>
+                    </View>
+                </Modal>
 
                 {loadingUsers ? (
                     <ActivityIndicator size="large" color={COLORS.primary} style={styles.loadingIndicator} />
@@ -104,28 +127,25 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         marginBottom: 20,
     },
-    filterContainer: {
+    headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-around',
-        backgroundColor: COLORS.surface,
-        borderRadius: 10,
-        paddingVertical: 10,
+        justifyContent: 'space-between',
+        marginBottom: 4,
+    },
+    filterContainer: {
+        flexDirection: 'row',
+        gap: 10,
         marginBottom: 20,
-        flexWrap: 'wrap',
     },
-    filterLabel: {
-        color: COLORS.subText,
-        fontSize: 14,
-        marginHorizontal: 5,
+    filterButton: {
+        backgroundColor: COLORS.surface,
+        padding: 12,
+        borderRadius: 8,
+        flex: 1,
+        alignItems: 'center',
     },
-    pickerStyle: {
-        height: 50,
-        width: 120,
-        color: COLORS.text,
-        backgroundColor: COLORS.background,
-    },
-    pickerItemStyle: {
+    filterButtonText: {
         color: COLORS.text,
     },
     resetButton: {
@@ -133,11 +153,32 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingVertical: 8,
         borderRadius: 5,
-        marginLeft: 10,
+        justifyContent: 'center',
     },
     resetButtonText: {
         color: '#fff',
         fontWeight: 'bold',
+    },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        height: '40%',
+        padding: 20,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+    },
+    modalItem: {
+        padding: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    modalItemText: {
+        fontSize: 16,
+        color: '#000',
     },
     loadingIndicator: {
         marginTop: 50,
@@ -160,6 +201,7 @@ const styles = StyleSheet.create({
     },
     userInfo: {
         flex: 1,
+        marginLeft: 10,
     },
     nickname: {
         fontSize: 18,
@@ -171,7 +213,8 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     tierText: {
-        fontSize: 14,
+        fontSize: 18,
+        fontWeight: 'bold',
         color: COLORS.primary,
         marginRight: 10,
     },

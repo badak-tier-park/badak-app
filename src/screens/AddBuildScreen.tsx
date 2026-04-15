@@ -23,8 +23,8 @@ export default function AddBuildScreen({ navigation, route }: Props) {
       pop: step.pop?.toString() || '0', 
       time: step.time || '00:00',
       action: step.action || '',
-      step_order: step.step_order ?? index,
-  })) || [
+      step_order: step.step_order ?? index, 
+  })) || [ 
       { pop: '0', time: '00:00', action: '', step_order: 0 } 
   ];
   
@@ -49,7 +49,7 @@ export default function AddBuildScreen({ navigation, route }: Props) {
     };
 
     if (isEdit) {
-      updateBuild(editItem.id, buildData, currentSteps);
+      updateBuild(editItem.id, buildData, currentSteps); 
     } else {
       addBuild(buildData, currentSteps);
     }
@@ -90,7 +90,7 @@ export default function AddBuildScreen({ navigation, route }: Props) {
             <Text style={styles.label}>빌드 설명</Text>
             <TextInput 
                 style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
-                value={description ?? ''}
+                value={description ?? ''} 
                 onChangeText={setDescription}
                 placeholder="이 빌드에 대한 설명을 입력하세요."
                 placeholderTextColor="#666"
@@ -99,21 +99,28 @@ export default function AddBuildScreen({ navigation, route }: Props) {
         </View>
 
         <Text style={styles.label}>빌드 단계</Text>
+        {/* 새롭게 추가된 레이블 */}
+        <View style={styles.stepLabelsRow}>
+          <Text style={[styles.stepLabelText, { width: 60 }]}>인구</Text>
+          <Text style={[styles.stepLabelText, { width: 80 }]}>시간</Text>
+          <Text style={[styles.stepLabelText, { flex: 1 }]}>할 일</Text>
+        </View>
+
         {steps.map((step, index) => (
           <View key={index} style={styles.stepRow}>
             <TextInput
-              style={[styles.input, { flex: 1, marginRight: 5 }]}
+              style={[styles.input, { width: 60, marginRight: 5 }]} 
               placeholder="인구"
               keyboardType="numeric"
-              value={step.pop}
+              value={step.pop} 
               onChangeText={(val) => {
                 const newSteps = [...steps];
-                newSteps[index].pop = val;
+                newSteps[index].pop = val; 
                 setSteps(newSteps);
               }}
             />
             <TextInput
-              style={[styles.input, { flex: 1.5, marginRight: 5 }]}
+              style={[styles.input, { width: 80, marginRight: 5 }]} 
               placeholder="시간 (e.g., 03:30)"
               value={step.time}
               onChangeText={(val) => {
@@ -123,8 +130,8 @@ export default function AddBuildScreen({ navigation, route }: Props) {
               }}
             />
             <TextInput
-              style={[styles.input, { flex: 3 }]}
-              placeholder="할 일"
+              style={[styles.input, { flex: 1 }]} 
+              placeholder="건설, 생산 등"
               value={step.action}
               onChangeText={(val) => {
                 const newSteps = [...steps];
@@ -166,6 +173,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 5, 
     alignItems: 'center', 
     borderRadius: 8 
+  },
+  stepLabelsRow: { // 추가된 스타일
+    flexDirection: 'row',
+    marginBottom: 5,
+    paddingHorizontal: 5, // Input 필드의 padding과 맞추기
+  },
+  stepLabelText: { // 추가된 스타일
+    color: COLORS.subText,
+    fontSize: 12,
+    marginRight: 5, // TextInput과 동일한 간격
   },
   stepRow: { flexDirection: 'row', marginBottom: 10 },
   addButton: { padding: 15, alignItems: 'center' },
