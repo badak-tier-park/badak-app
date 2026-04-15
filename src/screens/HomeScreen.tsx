@@ -1,21 +1,19 @@
 import React from 'react';
-import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator, SafeAreaView } from 'react-native'; // ActivityIndicator 추가
+import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator, SafeAreaView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, BuildItem } from '../types';
-import { useBuilds } from '../context/BuildContext'; // useBuilds 훅 임포트
+import { useBuilds } from '../context/BuildContext';
 import { RaceBadge } from '../components/RaceBadge'; 
 import { commonStyles } from '../utils/commonStyles';
 import { COLORS } from '../utils/theme';
 
-// HomeScreen은 RootStackParamList에 정의된 "Home" 스크린의 props를 받습니다.
-// Tab Navigator 안에서 Stack Navigator로 렌더링되므로 NativeStackScreenProps를 사용합니다.
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: Props) {
-    const { builds, loadingBuilds } = useBuilds(); // loadingBuilds 상태 사용
+    const { builds, loadingBuilds } = useBuilds();
     return (
         <SafeAreaView style={commonStyles.safeArea}>
-        {loadingBuilds ? ( // 로딩 중일 때 ActivityIndicator 표시
+        {loadingBuilds ? (
             <ActivityIndicator size="large" color={COLORS.primary} style={styles.loadingIndicator} />
         ) : (
         <FlatList
@@ -36,7 +34,7 @@ export default function HomeScreen({ navigation }: Props) {
                 </View>
             </TouchableOpacity>
             )}
-                ListEmptyComponent={<Text style={styles.emptyText}>등록된 빌드가 없습니다.</Text>} // 빌드가 없을 때 메시지
+                ListEmptyComponent={<Text style={styles.emptyText}>등록된 빌드가 없습니다.</Text>}
         />
         )}
 

@@ -8,10 +8,8 @@ import { commonStyles } from '../utils/commonStyles';
 import { COLORS, getRaceColor } from '../utils/theme';
 import { RaceBadge } from '../components/RaceBadge';
 
-// RootStackParamList에 정의된 "Users" 스크린의 Props
 type Props = BottomTabScreenProps<RootStackParamList, 'Users'>;
 
-// navigation과 route를 모두 받도록 명시합니다. (비록 route는 사용하지 않더라도)
 export default function UserListScreen({ navigation, route }: Props) {
     const { users, loadingUsers, filterUsers } = useUsers();
     const [selectedTier, setSelectedTier] = useState<string | undefined>(undefined);

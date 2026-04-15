@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react'; // useCallback 추가
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { User } from '../types';
 import { supabase } from '../utils/supabase';
 
@@ -6,7 +6,7 @@ interface UserContextType {
     users: User[];
     loadingUsers: boolean;
     fetchUsers: () => Promise<void>;
-    filterUsers: (tier?: string | null, race?: 'T' | 'Z' | 'P' | null) => void; // null 허용
+    filterUsers: (tier?: string | null, race?: 'T' | 'Z' | 'P' | null) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -14,13 +14,12 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [users, setUsers] = useState<User[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(true);
-    const [currentFilter, setCurrentFilter] = useState<{ tier?: string | null; race?: 'T' | 'Z' | 'P' | null }>({}); // null 허용
+    const [currentFilter, setCurrentFilter] = useState<{ tier?: string | null; race?: 'T' | 'Z' | 'P' | null }>({});
 
-    const fetchUsers = useCallback(async () => { // useCallback으로 감싸서 최적화
+    const fetchUsers = useCallback(async () => {
         setLoadingUsers(true);
         let query = supabase.from('users').select('*').order('created_at', { ascending: false });
 
-        // 필터링 적용
         if (currentFilter.tier) {
             query = query.eq('tier', currentFilter.tier);
         }
@@ -46,10 +45,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUsers(formattedData);
         }
         setLoadingUsers(false);
-    }, [currentFilter]); // currentFilter가 변경될 때마다 fetchUsers 함수 재생성
+    }, [currentFilter]);
     useEffect(() => {
         fetchUsers();
-    }, [fetchUsers]); // fetchUsers가 변경될 때마다 데이터를 다시 가져옴
+    }, [fetchUsers]);
     const filterUsers = (tier?: string | null, race?: 'T' | 'Z' | 'P' | null) => {
         setCurrentFilter({ tier, race });
     };

@@ -10,7 +10,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Detail'>;
 
 export default function DetailScreen({ route, navigation }: Props) {
   const { item } = route.params;
-  const { deleteBuild, loadingBuilds } = useBuilds(); // loadingBuilds 상태 추가
+  const { deleteBuild, loadingBuilds } = useBuilds();
   const themeColor = getRaceColor(item.race);
 
   const handleDelete = () => {
@@ -35,7 +35,7 @@ export default function DetailScreen({ route, navigation }: Props) {
     }
   };
 
-  if (loadingBuilds) { // 빌드 로딩 중일 때 표시
+  if (loadingBuilds) {
     return (
     <SafeAreaView style={commonStyles.safeArea}>
         <ActivityIndicator size="large" color={COLORS.primary} style={styles.loadingIndicator} />
@@ -65,7 +65,7 @@ export default function DetailScreen({ route, navigation }: Props) {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.actionButton, { borderColor: COLORS.secondary, marginLeft: 8 }]} // secondary 사용
+                style={[styles.actionButton, { borderColor: COLORS.secondary, marginLeft: 8 }]}
                 onPress={handleDelete}
               >
                 <Text style={[styles.actionButtonText, { color: COLORS.secondary }]}>삭제</Text>
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold', 
     color: COLORS.text 
   },
-  descriptionText: { // 설명 텍스트 스타일 추가
+  descriptionText: {
     fontSize: 14, 
     color: COLORS.subText, 
     marginTop: 5,

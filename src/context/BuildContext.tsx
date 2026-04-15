@@ -4,21 +4,21 @@ import { supabase } from '../utils/supabase';
 
 interface BuildContextType {
     builds: BuildItem[];
-    loadingBuilds: boolean; // 로딩 상태 추가
+    loadingBuilds: boolean;
     addBuild: (buildData: Partial<BuildItem>, steps: BuildStep[]) => void; 
     updateBuild: (buildId: string, buildData: Partial<BuildItem>, steps: BuildStep[]) => void;
     deleteBuild: (id: string) => void;
-    fetchBuilds: () => Promise<void>; // fetch 함수도 외부에 노출
+    fetchBuilds: () => Promise<void>;
 }
 
 const BuildContext = createContext<BuildContextType | undefined>(undefined);
 
 export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [builds, setBuilds] = useState<BuildItem[]>([]); 
-    const [loadingBuilds, setLoadingBuilds] = useState(true); // 로딩 상태 추가
+    const [loadingBuilds, setLoadingBuilds] = useState(true);
 
     const fetchBuilds = async () => {
-        setLoadingBuilds(true); // 로딩 시작
+        setLoadingBuilds(true);
         const { data, error } = await supabase
             .from('builds')
             .select(`
@@ -51,7 +51,7 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             })) || [];
             setBuilds(formattedData);
         }
-        setLoadingBuilds(false); // 로딩 종료
+        setLoadingBuilds(false);
     };
 
     useEffect(() => {
