@@ -23,17 +23,14 @@ export default function AddBuildScreen({ navigation, route }: Props) {
       pop: step.pop?.toString() || '0', 
       time: step.time || '00:00',
       action: step.action || '',
-      // editItem이 있을 경우, 기존 step_order 유지
       step_order: step.step_order ?? index,
   })) || [
-      // editItem이 없을 경우, 기본값 설정
       { pop: '0', time: '00:00', action: '', step_order: 0 } 
   ];
   
   const [steps, setSteps] = useState<BuildStep[]>(initialSteps);
 
   const addStep = () => {
-    // 새 스텝 추가 시 step_order 자동 증가
     setSteps([...steps, { pop: '0', time: '00:00', action: '', step_order: steps.length }]);
   };
 
@@ -52,7 +49,6 @@ export default function AddBuildScreen({ navigation, route }: Props) {
     };
 
     if (isEdit) {
-      // updateBuild 호출 시 id, buildData, currentSteps 전달
       updateBuild(editItem.id, buildData, currentSteps);
     } else {
       addBuild(buildData, currentSteps);
@@ -90,12 +86,11 @@ export default function AddBuildScreen({ navigation, route }: Props) {
           </View>
         </View>
 
-        {/* Description 입력 필드 추가 */}
         <View style={styles.inputGroup}>
             <Text style={styles.label}>빌드 설명</Text>
             <TextInput 
                 style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
-                value={description ?? ''} // description이 null일 경우 대비
+                value={description ?? ''}
                 onChangeText={setDescription}
                 placeholder="이 빌드에 대한 설명을 입력하세요."
                 placeholderTextColor="#666"
@@ -110,7 +105,7 @@ export default function AddBuildScreen({ navigation, route }: Props) {
               style={[styles.input, { flex: 1, marginRight: 5 }]}
               placeholder="인구"
               keyboardType="numeric"
-              value={step.pop} // string으로 유지
+              value={step.pop}
               onChangeText={(val) => {
                 const newSteps = [...steps];
                 newSteps[index].pop = val;

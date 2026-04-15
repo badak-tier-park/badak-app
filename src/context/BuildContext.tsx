@@ -4,19 +4,21 @@ import { supabase } from '../utils/supabase';
 
 interface BuildContextType {
     builds: BuildItem[];
+    loadingBuilds: boolean; // 로딩 상태 추가
     addBuild: (buildData: Partial<BuildItem>, steps: BuildStep[]) => void; 
     updateBuild: (buildId: string, buildData: Partial<BuildItem>, steps: BuildStep[]) => void;
     deleteBuild: (id: string) => void;
+    fetchBuilds: () => Promise<void>; // fetch 함수도 외부에 노출
 }
 
 const BuildContext = createContext<BuildContextType | undefined>(undefined);
 
 export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [builds, setBuilds] = useState<BuildItem[]>([]); 
-    const [loading, setLoading] = useState(true);
+    const [loadingBuilds, setLoadingBuilds] = useState(true); // 로딩 상태 추가
 
     const fetchBuilds = async () => {
-        setLoading(true);
+        setLoadingBuilds(true); // 로딩 시작
         const { data, error } = await supabase
             .from('builds')
             .select(`
@@ -26,14 +28,21 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('데이터 로딩 에러:', error.message);
+            console.error('빌드 데이터 로딩 에러:', error.message);
         } else {
             const formattedData = data?.map((build: any) => ({
-                ...build,
-                build_steps: build.build_steps?.map((step: any) => ({ // any 대신 BuildStep 타입으로 명시하면 더 좋음
+                id: build.id,
+                title: build.title,
+                race: build.race,
+                description: build.description,
+                author_id: build.author_id,
+                is_public: build.is_public,
+                created_at: build.created_at,
+                updated_at: build.updated_at,
+                build_steps: build.build_steps?.map((step: any) => ({
                     id: step.id,
                     build_id: step.build_id,
-                    step_order: step.step_order ?? 0, // step_order 기본값 설정
+                    step_order: step.step_order ?? 0,
                     pop: step.pop?.toString() || '0', 
                     time: step.time || '00:00',
                     action: step.action || '',
@@ -42,7 +51,7 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             })) || [];
             setBuilds(formattedData);
         }
-        setLoading(false);
+        setLoadingBuilds(false); // 로딩 종료
     };
 
     useEffect(() => {
@@ -68,7 +77,7 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         const stepsToInsert = steps.map((step, index) => ({
             build_id: newBuild.id,
-            step_order: index, // step_order를 index로 설정
+            step_order: index,
             pop: step.pop, 
             time: step.time,
             action: step.action
@@ -99,7 +108,7 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         const stepsToInsert = steps.map((step, index) => ({
             build_id: buildId,
-            step_order: index, // step_order를 index로 설정
+            step_order: index,
             pop: step.pop, 
             time: step.time,
             action: step.action
@@ -121,7 +130,7 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     return (
-        <BuildContext.Provider value={{ builds, addBuild, updateBuild, deleteBuild }}>
+        <BuildContext.Provider value={{ builds, loadingBuilds, addBuild, updateBuild, deleteBuild, fetchBuilds }}>
         {children}
         </BuildContext.Provider>
     );

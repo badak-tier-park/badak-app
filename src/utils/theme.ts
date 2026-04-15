@@ -9,6 +9,8 @@ export const COLORS = {
     zerg: '#9b59b6',
     protoss: '#f1c40f',
     primary: '#007AFF',
+    secondary: '#FF6347',
+    card: '#282828',
 };
 
 export const SIZES = {
@@ -21,5 +23,6 @@ export const SIZES = {
 export const getRaceColor = (race: 'T' | 'Z' | 'P') => {
     if (race === 'T') return COLORS.terran;
     if (race === 'Z') return COLORS.zerg;
-    return COLORS.protoss;
+    if (race === 'P') return COLORS.protoss;
+    return COLORS.subText;
 };
