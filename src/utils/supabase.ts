@@ -1,13 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import Constants from 'expo-constants'; // 이 부분이 import 되어 있어야 합니다.
-
-// --- DEBUGGING: Constants.expoConfig.extra 값 확인 ---
-console.log('--- supabase.ts DEBUG ---');
-console.log('Constants.expoConfig?.extra:', Constants.expoConfig?.extra);
-console.log('Constants.expoConfig?.extra?.supabaseUrl (from app.config.ts):', Constants.expoConfig?.extra?.supabaseUrl);
-console.log('Constants.expoConfig?.extra?.supabaseAnonKey (from app.config.ts):', Constants.expoConfig?.extra?.supabaseAnonKey);
-console.log('---------------------------');
-// ---------------------------------------------------
+import Constants from 'expo-constants'; 
 
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl;
 const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey;

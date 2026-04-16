@@ -1,22 +1,24 @@
 import React from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator, SafeAreaView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList, BuildItem } from '../types'; // BuildItem 타입 사용
+import { RootStackParamList, BuildItem } from '../types';
 import { useBuilds } from '../context/BuildContext';
+import { RaceBadge } from '../components/RaceBadge'; 
 import { commonStyles } from '../utils/commonStyles';
 import { COLORS } from '../utils/theme';
-import { RaceBadge } from '../components/RaceBadge'; 
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: Props) {
-    const { builds } = useBuilds();
-
+    const { builds, loadingBuilds } = useBuilds();
     return (
         <SafeAreaView style={commonStyles.safeArea}>
+        {loadingBuilds ? (
+            <ActivityIndicator size="large" color={COLORS.primary} style={styles.loadingIndicator} />
+        ) : (
         <FlatList
             data={builds}
-            keyExtractor={item => item.id} // id를 key로 사용
+            keyExtractor={item => item.id}
             contentContainerStyle={[commonStyles.container, { paddingBottom: 80 }]} 
             renderItem={({ item }) => (
             <TouchableOpacity 
@@ -32,7 +34,9 @@ export default function HomeScreen({ navigation }: Props) {
                 </View>
             </TouchableOpacity>
             )}
+                ListEmptyComponent={<Text style={styles.emptyText}>등록된 빌드가 없습니다.</Text>}
         />
+        )}
 
         {/* 글쓰기 플로팅 버튼 */}
         <TouchableOpacity 
@@ -48,8 +52,6 @@ export default function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
     cardLayout: { flexDirection: 'row', alignItems: 'center' },
     textContainer: { marginLeft: 15 },
-    // matchupText 스타일 제거 (더 이상 사용되지 않음)
-    // matchupText: { color: COLORS.subText, fontSize: 12, marginBottom: 2 }, 
     cardTitle: { color: COLORS.text, fontSize: 16, fontWeight: '600' },
     
     fab: {
@@ -73,5 +75,14 @@ const styles = StyleSheet.create({
         fontSize: 30,
         fontWeight: '300',
         marginTop: -2, 
+    },
+    loadingIndicator: {
+        marginTop: 50,
+    },
+    emptyText: {
+        textAlign: 'center',
+        color: COLORS.subText,
+        marginTop: 50,
+        fontSize: 16,
     },
 });
