@@ -18,20 +18,20 @@ const BuildContext = createContext<BuildContextType | undefined>(undefined);
 export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [builds, setBuilds] = useState<BuildItem[]>([]); 
     const [loadingBuilds, setLoadingBuilds] = useState(true); 
-    const { user } = useAuth(); // Supabase Auth User (id는 UUID)
+    const { user } = useAuth();
+
     const fetchBuilds = useCallback(async () => {
         setLoadingBuilds(true);
+        
+        const discordId = (user as any)?.discord_custom_id;
+
         let query = supabase.from('builds').select(`
             *,
-                build_steps ( * ) 
+            build_steps ( * ) 
         `).order('created_at', { ascending: false });
 
-        // user.id (UUID) 를 author_id (UUID) 로 필터링
-        if (user?.id) {
-            query = query.eq('author_id', user.id);
-        } else {
-            // 로그인이 안 된 경우, RLS 정책에 따라 처리
-            // RLS: auth.role() = 'authenticated' 로 설정되어 있다면, 여기서는 빈 결과가 나와야 함
+        if (discordId) {
+            query = query.eq('author_id', discordId);
         }
 
         const { data, error } = await query;
@@ -61,7 +61,8 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setBuilds(formattedData);
         }
         setLoadingBuilds(false);
-    }, [user?.id]); // user.id 변경 시 fetch
+    }, [user]);
+
     useEffect(() => {
         fetchBuilds();
     }, [fetchBuilds]);
@@ -70,10 +71,10 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const authorIdStr = String((user as any)?.discord_custom_id);
 
         const payload = {
-            title: buildData.title || "테스트 빌드", // 필수값 보장
-            race: buildData.race || "T",           // 필수값 보장
+            title: buildData.title || "테스트 빌드",
+            race: buildData.race || "T",
             description: buildData.description || "",
-            author_id: authorIdStr                 // 문자열로 보내기
+            author_id: authorIdStr
         };
 
         const authorId = (user as any)?.discord_custom_id;
@@ -97,14 +98,13 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             .single();
 
         if (buildError) {
-            // 여기서 여전히 42501이 뜬다면 정책의 비교문 형식이 문제인 것임
             console.error('빌드 저장 실패:', buildError);
             return;
         }
         const newBuildId = newBuild?.id;
         if (!newBuildId) {
-             console.error('새 빌드 ID를 가져오지 못했습니다.');
-             return;
+            console.error('새 빌드 ID를 가져오지 못했습니다.');
+            return;
         }
         const stepsToInsert = steps.map((step, index) => ({
             build_id: newBuildId,
@@ -119,7 +119,7 @@ export const BuildProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             .insert(stepsToInsert);
 
         if (stepError) {
-             console.error('단계 저장 실패:', stepError);
+            console.error('단계 저장 실패:', stepError);
         } else {
             fetchBuilds();
         }
