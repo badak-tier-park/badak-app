@@ -61,30 +61,33 @@ export default function LeagueDetailScreen({ route }: Props) {
         return team ? team.team_name : '팀미정';
     };
 
-    const getAceTeamName = (pId: any) => {
-        if (!pId) return '팀미정';
+    const getAceTeamInfo = (pId: any) => {
+        if (!pId) return { name: '팀미정', captainId: null };
         const sId = String(pId);
+        
         const asCaptain = teamNames.find(t => String(t.captain_player_id) === sId);
-        if (asCaptain) return asCaptain.team_name;
+        if (asCaptain) return { name: asCaptain.team_name, captainId: asCaptain.captain_player_id };
 
         const pickInfo = draftPicks.find(p => String(p.member_player_id) === sId);
-        if (pickInfo) return getTeamNameByCaptain(pickInfo.captain_player_id);
-        return '팀미정';
+        if (pickInfo) {
+            return { 
+                name: getTeamNameByCaptain(pickInfo.captain_player_id), 
+                captainId: pickInfo.captain_player_id 
+            };
+        }
+        return { name: '팀미정', captainId: null };
     };
 
-    // 단일 ID 또는 ID 배열을 받아 맵 이름을 반환하는 함수
     const getMapNames = (mapData: any) => {
-        if (!mapData) return '맵 미정';
-        
+        if (!mapData) return '전장 미정';
         if (Array.isArray(mapData)) {
             return mapData
                 .map(id => allMaps.find(m => String(m.id) === String(id))?.name)
                 .filter(Boolean)
                 .join(', ');
         }
-        
         const map = allMaps.find(m => String(m.id) === String(mapData));
-        return map ? map.name : '맵 미정';
+        return map ? map.name : '전장 미정';
     };
 
     if (!schedule) return null;
@@ -128,24 +131,25 @@ export default function LeagueDetailScreen({ route }: Props) {
                                     <View key={`match-view-${idx}`} style={styles.matchCard}>
                                         <View style={styles.matchCardHeader}>
                                             <Text style={styles.matchVol}>SET {currentSlot}</Text>
-                                            {/* map_ids 배열에서 맵 이름들을 추출하여 표시 */}
                                             <Text style={styles.matchMapName}>{getMapNames(matchMap.map_ids)}</Text>
                                         </View>
                                         <View style={styles.vsContainer}>
                                             <View style={styles.playerSide}>
                                                 <Text style={[styles.playerNick, winA && styles.winnerHighlight]}>
                                                     {entryA?.player_ids 
-                                                        ? entryA.player_ids.map((pid: any) => `[${getTeamNameByCaptain(entryA?.captain_player_id)}] ${findNickname(pid)}`).join('\n')
+                                                        ? entryA.player_ids.map((pid: any) => `[${getTeamNameByCaptain(entryA?.captain_player_id)}]\n${findNickname(pid)}`).join('\n')
                                                         : '미등록'}
                                                 </Text>
+                                                {winA && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
                                             </View>
                                             <Text style={styles.vsLabel}>VS</Text>
                                             <View style={styles.playerSide}>
                                                 <Text style={[styles.playerNick, winB && styles.winnerHighlight]}>
                                                     {entryB?.player_ids 
-                                                        ? entryB.player_ids.map((pid: any) => `[${getTeamNameByCaptain(entryB?.captain_player_id)}] ${findNickname(pid)}`).join('\n')
+                                                        ? entryB.player_ids.map((pid: any) => `[${getTeamNameByCaptain(entryB?.captain_player_id)}]\n${findNickname(pid)}`).join('\n')
                                                         : '미등록'}
                                                 </Text>
+                                                {winB && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
                                             </View>
                                         </View>
                                     </View>
@@ -162,17 +166,30 @@ export default function LeagueDetailScreen({ route }: Props) {
                                 <Text style={styles.matchMapName}>{getMapNames(aceResult.selected_map_id)}</Text>
                             </View>
                             <View style={styles.vsContainer}>
-                                <View style={styles.playerSide}>
-                                    <Text style={[styles.playerNick, {color: COLORS.text}]}>
-                                        {`[${getAceTeamName(aceResult.ace_player_a_id)}]\n${findNickname(aceResult.ace_player_a_id)}`}
-                                    </Text>
-                                </View>
-                                <Text style={styles.vsLabel}>VS</Text>
-                                <View style={styles.playerSide}>
-                                    <Text style={[styles.playerNick, {color: COLORS.text}]}>
-                                        {`[${getAceTeamName(aceResult.ace_player_b_id)}]\n${findNickname(aceResult.ace_player_b_id)}`}
-                                    </Text>
-                                </View>
+                                {(() => {
+                                    const infoA = getAceTeamInfo(aceResult.ace_player_a_id);
+                                    const infoB = getAceTeamInfo(aceResult.ace_player_b_id);
+                                    const winA = aceResult.winner_captain_id && infoA.captainId && String(aceResult.winner_captain_id) === String(infoA.captainId);
+                                    const winB = aceResult.winner_captain_id && infoB.captainId && String(aceResult.winner_captain_id) === String(infoB.captainId);
+
+                                    return (
+                                        <>
+                                            <View style={styles.playerSide}>
+                                                <Text style={[styles.playerNick, winA && styles.winnerHighlight]}>
+                                                    {`[${infoA.name}]\n${findNickname(aceResult.ace_player_a_id)}`}
+                                                </Text>
+                                                {winA && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
+                                            </View>
+                                            <Text style={styles.vsLabel}>VS</Text>
+                                            <View style={styles.playerSide}>
+                                                <Text style={[styles.playerNick, winB && styles.winnerHighlight]}>
+                                                    {`[${infoB.name}]\n${findNickname(aceResult.ace_player_b_id)}`}
+                                                </Text>
+                                                {winB && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
+                                            </View>
+                                        </>
+                                    );
+                                })()}
                             </View>
                         </View>
                     )}
@@ -199,5 +216,7 @@ const styles = StyleSheet.create({
     playerSide: { flex: 1, alignItems: 'center' },
     playerNick: { fontSize: 12, color: COLORS.text, fontWeight: '600', textAlign: 'center' },
     winnerHighlight: { color: COLORS.primary },
-    vsLabel: { marginHorizontal: 10, fontSize: 12, fontWeight: 'bold', color: COLORS.subText }
+    vsLabel: { marginHorizontal: 10, fontSize: 12, fontWeight: 'bold', color: COLORS.subText },
+    winTag: { backgroundColor: COLORS.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginTop: 6 },
+    winTagText: { color: '#fff', fontSize: 9, fontWeight: 'bold' }
 });
