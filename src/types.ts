@@ -38,7 +38,7 @@ export interface League {
     name: string;
     start_date: string;
     end_date: string;
-    eligible_tiers: string[]; // _text 배열이지만 string[]으로 처리
+    eligible_tiers: string[];
     created_at: string;
     updated_at: string;
     eligibility_type: 'open' | 'application' | 'invitation' | string;

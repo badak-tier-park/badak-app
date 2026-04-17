@@ -8,20 +8,18 @@ import { COLORS } from '../utils/theme';
 
 type Props = BottomTabScreenProps<RootStackParamList, 'Leagues'>;
 
-// HTML 태그 제거용 헬퍼 함수
 const stripHtml = (html: string | null) => {
     if (!html) return '';
     return html
-        .replace(/<[^>]*>?/gm, '') // 태그 제거
-        .replace(/&nbsp;/g, ' ')   // 공백 문자 처리
-        .replace(/\s\s+/g, ' ')    // 연속 공백 제거
+        .replace(/<[^>]*>?/gm, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s\s+/g, ' ')
         .trim();
 };
 
 export default function LeagueListScreen({ navigation }: Props) {
     const { leagues, loadingLeagues, fetchLeagues } = useLeagues();
 
-    // 화면 진입 시 데이터가 없으면 로드
     useEffect(() => {
         if (leagues.length === 0) {
             fetchLeagues();
@@ -64,9 +62,7 @@ export default function LeagueListScreen({ navigation }: Props) {
 
     return (
         <SafeAreaView style={commonStyles.safeArea}>
-            <View style={commonStyles.container}>
-                <Text style={styles.headerTitle}>리그 목록</Text>
-                
+            <View style={commonStyles.container}>                
                 {/* 로딩 중이면서 데이터가 아예 없을 때만 전체 화면 로딩 표시 */}
                 {loadingLeagues && leagues.length === 0 ? (
                     <View style={styles.centerContainer}>
@@ -100,12 +96,6 @@ export default function LeagueListScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: COLORS.text,
-        marginBottom: 20,
-    },
     centerContainer: {
         flex: 1,
         justifyContent: 'center',
