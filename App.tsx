@@ -9,6 +9,7 @@ import DetailScreen from './src/screens/DetailScreen';
 import AddBuildScreen from './src/screens/AddBuildScreen';
 import UserListScreen from './src/screens/UserListScreen';
 import LeagueListScreen from './src/screens/LeagueListScreen';
+import LeagueScheduleScreen from './src/screens/LeagueScheduleScreen';
 import LeagueDetailScreen from './src/screens/LeagueDetailScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import { BuildProvider } from './src/context/BuildContext';
@@ -35,6 +36,7 @@ function LeagueStack() {
     return (
         <Stack.Navigator>
             <Stack.Screen name='Leagues' component={LeagueListScreen} options={{ title: '리그 목록' }}/>
+            <Stack.Screen name='LeagueSchedule' component={LeagueScheduleScreen} options={{ title: '리그 일정' }}/>
             <Stack.Screen name='LeagueDetail' component={LeagueDetailScreen} options={{ title: '리그 상세' }}/>
         </Stack.Navigator>
     );

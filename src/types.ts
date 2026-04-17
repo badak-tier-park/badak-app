@@ -126,6 +126,7 @@ export type RootStackParamList = {
     UserList: undefined;
     Builds: undefined;
     Users: undefined;
-    LeagueDetail: { league: League };
     Leagues: undefined;
+    LeagueSchedule: { league: any };
+    LeagueDetail: { league: any, schedule: any };
 };

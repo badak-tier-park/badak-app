@@ -101,11 +101,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 *,
                 league_captains (*, player:users (*)),
                 league_match_maps (*),
-                league_draft_picks (
-                    *,
-                    captain_player:users!league_draft_picks_captain_player_id_fkey (*),
-                    member_player:users!league_draft_picks_member_player_id_fkey (*)
-                ),
+                league_draft_picks (*),
                 league_seed_holders (*, player:users (*))
             `)
             .eq('id', id)

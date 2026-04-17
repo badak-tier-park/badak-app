@@ -32,7 +32,7 @@ export default function LeagueListScreen({ navigation }: Props) {
         <TouchableOpacity 
             style={styles.leagueCard}
             activeOpacity={0.7}
-            onPress={() => navigation.navigate('LeagueDetail', { league: item })}
+            onPress={() => navigation.navigate('LeagueSchedule', { league: item })}
         >
             <View style={styles.cardHeader}>
                 <Text style={styles.leagueName}>{item.name}</Text>
