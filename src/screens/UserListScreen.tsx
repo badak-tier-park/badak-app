@@ -37,11 +37,6 @@ export default function UserListScreen({ navigation }: Props) {
 
     return (
         <SafeAreaView style={commonStyles.safeArea}>
-            {/* 상단 흰색 헤더 - 다른 화면과 텍스트 스타일 통일 */}
-            <View style={styles.whiteHeaderArea}>
-                <Text style={styles.headerTitleText}>유저 목록</Text>
-            </View>
-
             <View style={[commonStyles.container, { flex: 1 }]}>
                 {/* 필터 영역 */}
                 <View style={styles.filterContainer}>
@@ -80,16 +75,6 @@ export default function UserListScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-    whiteHeaderArea: {
-        backgroundColor: '#fff',
-        paddingHorizontal: 20,
-        paddingVertical: 15,
-        width: '100%',
-    },
-    headerTitleText: {
-        fontSize: 18,
-        color: '#000',
-    },
     filterContainer: {
         flexDirection: 'row',
         gap: 8,

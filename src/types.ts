@@ -120,13 +120,17 @@ export interface LeagueMatchEntry {
 }
 
 export type RootStackParamList = {
-    Home: undefined;
-    Detail: { item: BuildItem };
+    DashboardTab: undefined;
+    Leagues: undefined;
+    LeaguesTab: undefined;
+    Users: undefined;
+    Builds: undefined;
+    
+    Dashboard: undefined;
+    BuildList: undefined;
+    BuildDetail: { item: BuildItem };
     AddBuild: { item?: BuildItem };
     UserList: undefined;
-    Builds: undefined;
-    Users: undefined;
-    Leagues: undefined;
     LeagueSchedule: { league: any };
     LeagueDetail: { league: any, schedule: any };
 };
