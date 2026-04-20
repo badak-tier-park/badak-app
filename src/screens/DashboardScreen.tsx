@@ -60,7 +60,7 @@ export default function DashboardScreen({ navigation }: any) {
           <TouchableOpacity 
             key={item.id} 
             style={styles.card} 
-            onPress={() => navigation.navigate('DetailBuild', { item: item })}
+            onPress={() => navigation.navigate('BuildDetail', { item: item })}
           >
             <Text style={styles.cardText}>{item.title}</Text>
             <Text style={styles.cardSubText}>{item.updated_at ? item.updated_at.split('T')[0] : ''}</Text>
