@@ -19,6 +19,9 @@ export default function LeagueDetailScreen({ route }: Props) {
     const [draftPicks, setDraftPicks] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
+    // 엔트리 공개 여부 확인 (기본값 false로 안전하게 처리)
+    const isRevealed = schedule?.is_entry_revealed ?? false;
+
     const loadData = async () => {
         if (!schedule?.id || !league?.id) return;
         setLoading(true);
@@ -96,12 +99,16 @@ export default function LeagueDetailScreen({ route }: Props) {
 
     return (
         <SafeAreaView style={commonStyles.safeArea}>
+            {/* 상단 흰색 헤더 영역 - 스타일 통일 */}
+            <View style={styles.whiteHeaderArea}>
+                <Text style={styles.headerTitleText}>{schedule.match_date} 경기</Text>
+            </View>
+
             <ScrollView 
                 style={commonStyles.container}
                 refreshControl={<RefreshControl refreshing={loading} onRefresh={loadData} colors={[COLORS.primary]} />}
             >
-                <View style={styles.header}>
-                    <Text style={styles.title}>{schedule.match_date} 경기 결과</Text>
+                <View style={styles.infoSummary}>
                     <Text style={styles.subInfo}>{league?.name} - {schedule.round}라운드</Text>
                 </View>
 
@@ -136,18 +143,18 @@ export default function LeagueDetailScreen({ route }: Props) {
                                         <View style={styles.vsContainer}>
                                             <View style={styles.playerSide}>
                                                 <Text style={[styles.playerNick, winA && styles.winnerHighlight]}>
-                                                    {entryA?.player_ids 
+                                                    {isRevealed && entryA?.player_ids 
                                                         ? entryA.player_ids.map((pid: any) => `[${getTeamNameByCaptain(entryA?.captain_player_id)}]\n${findNickname(pid)}`).join('\n')
-                                                        : '미등록'}
+                                                        : '미공개'}
                                                 </Text>
                                                 {winA && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
                                             </View>
                                             <Text style={styles.vsLabel}>VS</Text>
                                             <View style={styles.playerSide}>
                                                 <Text style={[styles.playerNick, winB && styles.winnerHighlight]}>
-                                                    {entryB?.player_ids 
+                                                    {isRevealed && entryB?.player_ids 
                                                         ? entryB.player_ids.map((pid: any) => `[${getTeamNameByCaptain(entryB?.captain_player_id)}]\n${findNickname(pid)}`).join('\n')
-                                                        : '미등록'}
+                                                        : '미공개'}
                                                 </Text>
                                                 {winB && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
                                             </View>
@@ -176,14 +183,14 @@ export default function LeagueDetailScreen({ route }: Props) {
                                         <>
                                             <View style={styles.playerSide}>
                                                 <Text style={[styles.playerNick, winA && styles.winnerHighlight]}>
-                                                    {`[${infoA.name}]\n${findNickname(aceResult.ace_player_a_id)}`}
+                                                    {isRevealed ? `[${infoA.name}]\n${findNickname(aceResult.ace_player_a_id)}` : '미공개'}
                                                 </Text>
                                                 {winA && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
                                             </View>
                                             <Text style={styles.vsLabel}>VS</Text>
                                             <View style={styles.playerSide}>
                                                 <Text style={[styles.playerNick, winB && styles.winnerHighlight]}>
-                                                    {`[${infoB.name}]\n${findNickname(aceResult.ace_player_b_id)}`}
+                                                    {isRevealed ? `[${infoB.name}]\n${findNickname(aceResult.ace_player_b_id)}` : '미공개'}
                                                 </Text>
                                                 {winB && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
                                             </View>
@@ -200,10 +207,21 @@ export default function LeagueDetailScreen({ route }: Props) {
 }
 
 const styles = StyleSheet.create({
-    header: { padding: 20, backgroundColor: COLORS.card, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-    title: { fontSize: 24, fontWeight: 'bold', color: COLORS.text },
-    subInfo: { fontSize: 13, color: COLORS.primary, marginTop: 4, fontWeight: '600' },
-    matchSection: { paddingHorizontal: 16, paddingBottom: 20, marginTop: 10 },
+    whiteHeaderArea: {
+        backgroundColor: '#fff',
+        paddingHorizontal: 20,
+        paddingVertical: 18,
+        width: '100%',
+    },
+    headerTitleText: {
+        fontSize: 26,
+        fontWeight: '900',
+        color: '#000',
+        letterSpacing: -0.5,
+    },
+    infoSummary: { paddingHorizontal: 20, paddingVertical: 10 },
+    subInfo: { fontSize: 14, color: COLORS.primary, fontWeight: '700' },
+    matchSection: { paddingHorizontal: 16, paddingBottom: 20 },
     sectionTitle: { fontSize: 15, fontWeight: 'bold', color: COLORS.text, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: COLORS.primary, paddingLeft: 8 },
     matchCard: { backgroundColor: COLORS.card, borderRadius: 12, padding: 15, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
     aceCard: { borderColor: COLORS.primary, borderWidth: 1.5 },
