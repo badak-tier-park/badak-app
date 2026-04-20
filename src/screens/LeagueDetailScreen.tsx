@@ -19,9 +19,6 @@ export default function LeagueDetailScreen({ route }: Props) {
     const [draftPicks, setDraftPicks] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    // 엔트리 공개 여부 확인 (기본값 false로 안전하게 처리)
-    const isRevealed = schedule?.is_entry_revealed ?? false;
-
     const loadData = async () => {
         if (!schedule?.id || !league?.id) return;
         setLoading(true);
@@ -48,9 +45,7 @@ export default function LeagueDetailScreen({ route }: Props) {
         }
     };
 
-    useEffect(() => {
-        loadData();
-    }, []);
+    useEffect(() => { loadData(); }, []);
 
     const findNickname = (id: any) => {
         if (!id) return '미등록';
@@ -59,7 +54,7 @@ export default function LeagueDetailScreen({ route }: Props) {
     };
 
     const getTeamNameByCaptain = (captainId: any) => {
-        if (!captainId) return '팀미정';
+        if (!captainId || teamNames.length === 0) return '팀미정';
         const team = teamNames.find(t => String(t.captain_player_id) === String(captainId));
         return team ? team.team_name : '팀미정';
     };
@@ -67,27 +62,17 @@ export default function LeagueDetailScreen({ route }: Props) {
     const getAceTeamInfo = (pId: any) => {
         if (!pId) return { name: '팀미정', captainId: null };
         const sId = String(pId);
-        
         const asCaptain = teamNames.find(t => String(t.captain_player_id) === sId);
         if (asCaptain) return { name: asCaptain.team_name, captainId: asCaptain.captain_player_id };
-
         const pickInfo = draftPicks.find(p => String(p.member_player_id) === sId);
-        if (pickInfo) {
-            return { 
-                name: getTeamNameByCaptain(pickInfo.captain_player_id), 
-                captainId: pickInfo.captain_player_id 
-            };
-        }
+        if (pickInfo) return { name: getTeamNameByCaptain(pickInfo.captain_player_id), captainId: pickInfo.captain_player_id };
         return { name: '팀미정', captainId: null };
     };
 
     const getMapNames = (mapData: any) => {
         if (!mapData) return '전장 미정';
         if (Array.isArray(mapData)) {
-            return mapData
-                .map(id => allMaps.find(m => String(m.id) === String(id))?.name)
-                .filter(Boolean)
-                .join(', ');
+            return mapData.map(id => allMaps.find(m => String(m.id) === String(id))?.name).filter(Boolean).join(', ');
         }
         const map = allMaps.find(m => String(m.id) === String(mapData));
         return map ? map.name : '전장 미정';
@@ -95,25 +80,47 @@ export default function LeagueDetailScreen({ route }: Props) {
 
     if (!schedule) return null;
 
+    // schedule 객체의 캡틴 ID 필드명을 확인해 보세요. (보통 team_a_captain_id 등일 수 있습니다)
+    const capA = schedule.ace_player_a_captain_id || schedule.team_a_captain_id;
+    const capB = schedule.ace_player_b_captain_id || schedule.team_b_captain_id;
+
+    const scoreA = matchResults.filter(r => String(r.winner_captain_id) === String(capA)).length;
+    const scoreB = matchResults.filter(r => String(r.winner_captain_id) === String(capB)).length;
     const aceResult = matchResults.find(r => Number(r.slot_num) === 7);
 
     return (
         <SafeAreaView style={commonStyles.safeArea}>
-            {/* 상단 흰색 헤더 영역 - 스타일 통일 */}
-            <View style={styles.whiteHeaderArea}>
-                <Text style={styles.headerTitleText}>{schedule.match_date} 경기</Text>
-            </View>
-
             <ScrollView 
                 style={commonStyles.container}
                 refreshControl={<RefreshControl refreshing={loading} onRefresh={loadData} colors={[COLORS.primary]} />}
             >
-                <View style={styles.infoSummary}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>{schedule.match_date} 경기</Text>
                     <Text style={styles.subInfo}>{league?.name} - {schedule.round}라운드</Text>
                 </View>
 
                 <View style={styles.matchSection}>
-                    <Text style={styles.sectionTitle}>상세 스코어</Text>
+                    <Text style={styles.sectionTitle}>엔트리</Text>
+
+                    <View style={styles.teamMatchHeader}>
+                        <View style={styles.teamBox}>
+                            <Text style={[styles.teamHeaderName, scoreA > scoreB && styles.winnerHighlight]}>
+                                {getTeamNameByCaptain(capA)}
+                            </Text>
+                            <Text style={styles.teamScoreText}>{scoreA}</Text>
+                            {scoreA > scoreB && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
+                        </View>
+                        
+                        <Text style={styles.vsCenterLabel}>VS</Text>
+                        
+                        <View style={styles.teamBox}>
+                            <Text style={[styles.teamHeaderName, scoreB > scoreA && styles.winnerHighlight]}>
+                                {getTeamNameByCaptain(capB)}
+                            </Text>
+                            <Text style={styles.teamScoreText}>{scoreB}</Text>
+                            {scoreB > scoreA && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
+                        </View>
+                    </View>
                     
                     {league?.league_match_maps?.length > 0 && 
                         league.league_match_maps
@@ -125,8 +132,8 @@ export default function LeagueDetailScreen({ route }: Props) {
                                 const slotEntries = matchEntries.filter(e => Number(e.match_slot) === currentSlot);
                                 const result = matchResults.find(r => Number(r.slot_num) === currentSlot);
                                 
-                                let entryA = slotEntries.find(e => String(e.captain_player_id) === String(schedule.ace_player_a_captain_id));
-                                let entryB = slotEntries.find(e => String(e.captain_player_id) === String(schedule.ace_player_b_captain_id));
+                                let entryA = slotEntries.find(e => String(e.captain_player_id) === String(capA));
+                                let entryB = slotEntries.find(e => String(e.captain_player_id) === String(capB));
 
                                 if (!entryA && slotEntries.length > 0) entryA = slotEntries[0];
                                 if (!entryB && slotEntries.length > 1) entryB = slotEntries[1];
@@ -143,18 +150,14 @@ export default function LeagueDetailScreen({ route }: Props) {
                                         <View style={styles.vsContainer}>
                                             <View style={styles.playerSide}>
                                                 <Text style={[styles.playerNick, winA && styles.winnerHighlight]}>
-                                                    {isRevealed && entryA?.player_ids 
-                                                        ? entryA.player_ids.map((pid: any) => `[${getTeamNameByCaptain(entryA?.captain_player_id)}]\n${findNickname(pid)}`).join('\n')
-                                                        : '미공개'}
+                                                    {entryA?.player_ids ? entryA.player_ids.map((pid: any) => findNickname(pid)).join('\n') : '미등록'}
                                                 </Text>
                                                 {winA && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
                                             </View>
                                             <Text style={styles.vsLabel}>VS</Text>
                                             <View style={styles.playerSide}>
                                                 <Text style={[styles.playerNick, winB && styles.winnerHighlight]}>
-                                                    {isRevealed && entryB?.player_ids 
-                                                        ? entryB.player_ids.map((pid: any) => `[${getTeamNameByCaptain(entryB?.captain_player_id)}]\n${findNickname(pid)}`).join('\n')
-                                                        : '미공개'}
+                                                    {entryB?.player_ids ? entryB.player_ids.map((pid: any) => findNickname(pid)).join('\n') : '미등록'}
                                                 </Text>
                                                 {winB && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
                                             </View>
@@ -183,14 +186,14 @@ export default function LeagueDetailScreen({ route }: Props) {
                                         <>
                                             <View style={styles.playerSide}>
                                                 <Text style={[styles.playerNick, winA && styles.winnerHighlight]}>
-                                                    {isRevealed ? `[${infoA.name}]\n${findNickname(aceResult.ace_player_a_id)}` : '미공개'}
+                                                    {findNickname(aceResult.ace_player_a_id)}
                                                 </Text>
                                                 {winA && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
                                             </View>
                                             <Text style={styles.vsLabel}>VS</Text>
                                             <View style={styles.playerSide}>
                                                 <Text style={[styles.playerNick, winB && styles.winnerHighlight]}>
-                                                    {isRevealed ? `[${infoB.name}]\n${findNickname(aceResult.ace_player_b_id)}` : '미공개'}
+                                                    {findNickname(aceResult.ace_player_b_id)}
                                                 </Text>
                                                 {winB && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
                                             </View>
@@ -207,22 +210,16 @@ export default function LeagueDetailScreen({ route }: Props) {
 }
 
 const styles = StyleSheet.create({
-    whiteHeaderArea: {
-        backgroundColor: '#fff',
-        paddingHorizontal: 20,
-        paddingVertical: 18,
-        width: '100%',
-    },
-    headerTitleText: {
-        fontSize: 26,
-        fontWeight: '900',
-        color: '#000',
-        letterSpacing: -0.5,
-    },
-    infoSummary: { paddingHorizontal: 20, paddingVertical: 10 },
-    subInfo: { fontSize: 14, color: COLORS.primary, fontWeight: '700' },
-    matchSection: { paddingHorizontal: 16, paddingBottom: 20 },
+    header: { padding: 20, backgroundColor: COLORS.card, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+    title: { fontSize: 24, fontWeight: 'bold', color: COLORS.text },
+    subInfo: { fontSize: 13, color: COLORS.primary, marginTop: 4, fontWeight: '600' },
+    matchSection: { paddingHorizontal: 16, paddingBottom: 20, marginTop: 10 },
     sectionTitle: { fontSize: 15, fontWeight: 'bold', color: COLORS.text, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: COLORS.primary, paddingLeft: 8 },
+    teamMatchHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.card, padding: 20, borderRadius: 12, marginBottom: 15, borderWidth: 1.5, borderColor: COLORS.border },
+    teamBox: { flex: 1, alignItems: 'center' },
+    teamHeaderName: { fontSize: 16, fontWeight: '900', color: COLORS.text, marginBottom: 4 },
+    teamScoreText: { fontSize: 28, fontWeight: 'bold', color: COLORS.text },
+    vsCenterLabel: { fontSize: 16, fontWeight: '900', color: COLORS.subText, marginHorizontal: 15 },
     matchCard: { backgroundColor: COLORS.card, borderRadius: 12, padding: 15, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
     aceCard: { borderColor: COLORS.primary, borderWidth: 1.5 },
     matchCardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, borderBottomWidth: 0.5, borderBottomColor: COLORS.border, paddingBottom: 6, alignItems: 'center' },
