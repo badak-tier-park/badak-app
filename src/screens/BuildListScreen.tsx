@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator, SafeAreaView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList, BuildItem } from '../types';
+import { RootStackParamList } from '../types';
 import { useBuilds } from '../context/BuildContext';
 import { RaceBadge } from '../components/RaceBadge'; 
 import { commonStyles } from '../utils/commonStyles';
 import { COLORS } from '../utils/theme';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'BuildList'>;
 
 export default function HomeScreen({ navigation }: Props) {
     const { builds, loadingBuilds } = useBuilds();
@@ -23,7 +23,7 @@ export default function HomeScreen({ navigation }: Props) {
             renderItem={({ item }) => (
             <TouchableOpacity 
                 style={[commonStyles.card, styles.cardLayout]} 
-                onPress={() => navigation.navigate('Detail', { item })}
+                onPress={() => navigation.navigate('BuildDetail', { item })}
             >
                 {/* RaceBadge는 item.race를 사용 */}
                 <RaceBadge race={item.race} /> 

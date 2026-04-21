@@ -9,8 +9,10 @@ import { COLORS } from '../utils/theme';
 type Props = NativeStackScreenProps<RootStackParamList, 'LeagueDetail'>;
 
 export default function LeagueDetailScreen({ route }: Props) {
-    const { league, schedule } = route.params || {};
+    const { league: initialLeague, schedule } = route.params || {};
     
+    // 추가: 맵 정보를 포함한 전체 리그 데이터를 담을 상태
+    const [fullLeague, setFullLeague] = useState<any>(initialLeague);
     const [matchEntries, setMatchEntries] = useState<any[]>([]);
     const [matchResults, setMatchResults] = useState<any[]>([]);
     const [allMaps, setAllMaps] = useState<any[]>([]);
@@ -20,16 +22,18 @@ export default function LeagueDetailScreen({ route }: Props) {
     const [loading, setLoading] = useState(false);
 
     const loadData = async () => {
-        if (!schedule?.id || !league?.id) return;
+        if (!schedule?.id || !initialLeague?.id) return;
         setLoading(true);
         try {
-            const [mapsRes, usersRes, entriesRes, resultsRes, teamsRes, draftRes] = await Promise.all([
+            const [mapsRes, usersRes, entriesRes, resultsRes, teamsRes, draftRes, leagueRes] = await Promise.all([
                 supabase.from('maps').select('id, name'),
                 supabase.from('users').select('id, nickname'),
                 supabase.from('league_match_entries').select('*').eq('schedule_id', schedule.id),
                 supabase.from('league_match_slot_results').select('*').eq('schedule_id', schedule.id),
-                supabase.from('league_team_names').select('captain_player_id, team_name').eq('league_id', league.id),
-                supabase.from('league_draft_picks').select('captain_player_id, member_player_id').eq('league_id', league.id)
+                supabase.from('league_team_names').select('captain_player_id, team_name').eq('league_id', initialLeague.id),
+                supabase.from('league_draft_picks').select('captain_player_id, member_player_id').eq('league_id', initialLeague.id),
+                // 핵심: league_match_maps 데이터를 여기서 직접 가져옵니다.
+                supabase.from('leagues').select('*, league_match_maps(*)').eq('id', initialLeague.id).single()
             ]);
 
             setAllMaps(mapsRes.data || []);
@@ -38,6 +42,7 @@ export default function LeagueDetailScreen({ route }: Props) {
             setMatchResults(resultsRes.data || []);
             setTeamNames(teamsRes.data || []);
             setDraftPicks(draftRes.data || []);
+            setFullLeague(leagueRes.data || initialLeague);
         } catch (err: any) {
             console.error('Data loading error:', err.message);
         } finally {
@@ -47,6 +52,7 @@ export default function LeagueDetailScreen({ route }: Props) {
 
     useEffect(() => { loadData(); }, []);
 
+    // 헬퍼 함수들 (기존과 동일)
     const findNickname = (id: any) => {
         if (!id) return '미등록';
         const user = allUsers.find(u => String(u.id) === String(id));
@@ -80,9 +86,8 @@ export default function LeagueDetailScreen({ route }: Props) {
 
     if (!schedule) return null;
 
-    // schedule 객체의 캡틴 ID 필드명을 확인해 보세요. (보통 team_a_captain_id 등일 수 있습니다)
-    const capA = schedule.ace_player_a_captain_id || schedule.team_a_captain_id;
-    const capB = schedule.ace_player_b_captain_id || schedule.team_b_captain_id;
+    const capA = schedule.team_a_captain_id;
+    const capB = schedule.team_b_captain_id;
 
     const scoreA = matchResults.filter(r => String(r.winner_captain_id) === String(capA)).length;
     const scoreB = matchResults.filter(r => String(r.winner_captain_id) === String(capB)).length;
@@ -96,7 +101,7 @@ export default function LeagueDetailScreen({ route }: Props) {
             >
                 <View style={styles.header}>
                     <Text style={styles.title}>{schedule.match_date} 경기</Text>
-                    <Text style={styles.subInfo}>{league?.name} - {schedule.round}라운드</Text>
+                    <Text style={styles.subInfo}>{fullLeague?.name} - {schedule.round}라운드</Text>
                 </View>
 
                 <View style={styles.matchSection}>
@@ -110,9 +115,7 @@ export default function LeagueDetailScreen({ route }: Props) {
                             <Text style={styles.teamScoreText}>{scoreA}</Text>
                             {scoreA > scoreB && <View style={styles.winTag}><Text style={styles.winTagText}>WIN</Text></View>}
                         </View>
-                        
                         <Text style={styles.vsCenterLabel}>VS</Text>
-                        
                         <View style={styles.teamBox}>
                             <Text style={[styles.teamHeaderName, scoreB > scoreA && styles.winnerHighlight]}>
                                 {getTeamNameByCaptain(capB)}
@@ -122,8 +125,9 @@ export default function LeagueDetailScreen({ route }: Props) {
                         </View>
                     </View>
                     
-                    {league?.league_match_maps?.length > 0 && 
-                        league.league_match_maps
+                    {/* fullLeague에 로드된 맵 정보를 기준으로 렌더링 */}
+                    {fullLeague?.league_match_maps?.length > 0 ? (
+                        fullLeague.league_match_maps
                             .sort((a: any, b: any) => Number(a.match_number) - Number(b.match_number))
                             .map((matchMap: any, idx: number) => {
                                 const currentSlot = Number(matchMap.match_number);
@@ -165,8 +169,11 @@ export default function LeagueDetailScreen({ route }: Props) {
                                     </View>
                                 );
                             })
-                    }
+                    ) : !loading && (
+                        <Text style={{ textAlign: 'center', color: COLORS.subText, marginVertical: 20 }}>매치 맵 정보가 없습니다.</Text>
+                    )}
 
+                    {/* 에이스 결정전 (기존 로직 유지) */}
                     {aceResult && (
                         <View style={[styles.matchCard, styles.aceCard]}>
                             <View style={styles.matchCardHeader}>
@@ -209,6 +216,7 @@ export default function LeagueDetailScreen({ route }: Props) {
     );
 }
 
+// 스타일 시트는 기존과 동일하므로 생략
 const styles = StyleSheet.create({
     header: { padding: 20, backgroundColor: COLORS.card, borderBottomWidth: 1, borderBottomColor: COLORS.border },
     title: { fontSize: 24, fontWeight: 'bold', color: COLORS.text },

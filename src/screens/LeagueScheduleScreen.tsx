@@ -9,11 +9,13 @@ import { COLORS } from '../utils/theme';
 type Props = NativeStackScreenProps<RootStackParamList, 'LeagueSchedule'>;
 
 export default function LeagueScheduleScreen({ route, navigation }: Props) {
-    const { league } = route.params;
+    // 파라미터가 없을 경우를 대비해 빈 객체 처리
+    const { league } = route.params || {};
     const [schedules, setSchedules] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     const loadSchedules = useCallback(async () => {
+        if (!league?.id) return;
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -28,9 +30,17 @@ export default function LeagueScheduleScreen({ route, navigation }: Props) {
         } finally {
             setLoading(false);
         }
-    }, [league.id]);
+    }, [league?.id]);
 
     useEffect(() => { loadSchedules(); }, [loadSchedules]);
+
+    if (!league) {
+        return (
+            <SafeAreaView style={[commonStyles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ color: COLORS.text }}>리그 정보가 없습니다.</Text>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={commonStyles.safeArea}>
@@ -48,12 +58,19 @@ export default function LeagueScheduleScreen({ route, navigation }: Props) {
                         onPress={() => navigation.navigate('LeagueDetail', { league, schedule: item })}
                     >
                         <View>
-                            <Text style={styles.dateText}>{item.match_date}</Text>
+                            <Text style={styles.dateText}>
+                                {item.match_date ? item.match_date.split('T')[0] : '일정 미정'}
+                            </Text>
                             <Text style={styles.roundText}>{item.round} 라운드</Text>
                         </View>
                         <Text style={styles.arrow}>&gt;</Text>
                     </TouchableOpacity>
                 ))}
+                {schedules.length === 0 && !loading && (
+                    <View style={{ padding: 40, alignItems: 'center' }}>
+                        <Text style={{ color: COLORS.subText }}>등록된 경기 일정이 없습니다.</Text>
+                    </View>
+                )}
             </ScrollView>
         </SafeAreaView>
     );
