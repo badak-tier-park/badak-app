@@ -25,20 +25,28 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<RootStackParamList>();
 
 // 1. 대시보드 스택
+// 1. 대시보드 스택 수정
 function DashboardStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: COLORS.card }, headerTitleStyle: { color: COLORS.text }, headerTintColor: COLORS.primary, }}>
+    <Stack.Navigator 
+      screenOptions={{ 
+        headerStyle: { backgroundColor: COLORS.card }, 
+        headerTitleStyle: { color: COLORS.text }, 
+        headerTintColor: COLORS.primary, 
+      }}
+    >
       <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ title: '대시보드' }} />
       
-      {/* 추가: 대시보드에서 리그 클릭 시 이동할 일정 화면 등록 */}
+      {/* 리그 관련 */}
       <Stack.Screen name="LeagueSchedule" component={LeagueScheduleScreen} options={{ title: '리그 일정' }} />
-      
       <Stack.Screen name="LeagueDetail" component={LeagueDetailScreen} options={{ title: '리그 상세' }} />
+      
+      {/* 빌드 관련 - 대시보드에서 타고 들어갔을 때 에러 방지를 위해 AddBuild 추가 */}
       <Stack.Screen name="BuildDetail" component={BuildDetailScreen} options={{ title: '빌드 상세' }} />
+      <Stack.Screen name="AddBuild" component={AddBuildScreen} options={{ title: '빌드 추가/수정' }} /> 
     </Stack.Navigator>
   );
 }
-
 // 2. 리그 스택
 function LeagueStack() {
   return (
